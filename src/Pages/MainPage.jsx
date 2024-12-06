@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 
 Chartjs.register(CategoryScale, LinearScale, PointElement, BarElement, LineElement, Title, Tooltip, Legend);
 
+
+
+
 const MainPage = () => {
   const [data, setData] = useState([]);
   const [gender, setGender] = useState("All");
@@ -20,7 +23,7 @@ const MainPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch("http://localhost:3001/data");
+        const res = await fetch("https://moonshot2backend.vercel.app/data");
         const allData = await res.json();
         setData(allData);
       } catch (error) {
@@ -52,13 +55,13 @@ const MainPage = () => {
    
     if (startDate && endDate) {
       data2 = data2.filter((d) => {
-        const dbDate = normalizeDate(d.Day); // Normalize the database date
+        const dbDate = normalizeDate(d.Day); 
         console.log("Normalized DB Date:", dbDate);
   
-        const start = new Date(startDate + "T00:00:00");  // Normalize start date to midnight
-        const end = new Date(endDate + "T00:00:00");      // Normalize end date to midnight
+        const start = new Date(startDate + "T00:00:00");  
+        const end = new Date(endDate + "T00:00:00");      
   
-        // Validate dates and check range
+    
         if (isNaN(dbDate) || isNaN(start) || isNaN(end)) {
           console.warn("Invalid Date encountered:", d.Day, startDate, endDate);
           return false;
