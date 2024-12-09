@@ -3,8 +3,9 @@ import { Chart as Chartjs, CategoryScale, LinearScale, PointElement, BarElement,
 import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
 import zoomPlugin from "chartjs-plugin-zoom";
-import { useSearchParams } from "react-router-dom";
-import { handleError } from "../utils";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { handleError, handleSuccess } from "../utils";
+import { ToastContainer } from "react-toastify";
 
 Chartjs.register(CategoryScale, LinearScale, PointElement, BarElement, LineElement, Title, Tooltip, Legend, zoomPlugin);
 
@@ -16,7 +17,7 @@ const MainPage = () => {
   const [startDate, setStartDate] = useState("2022-10-10");
   const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
 
-
+  const navigate = useNavigate();
 
   const [sumA, setSumA] = useState(0);
   const [sumB, setSumB] = useState(0);
@@ -29,33 +30,30 @@ const MainPage = () => {
 
   const [selectedCategory, setSelectedCategory] = useState("A");
 
-
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-          // const url = "https://deploy-mern-app-1-api.vercel.app/products";
-          const url = "https://moonshot2backend.vercel.app/data";
-          const headers = {
-              headers: {
-                  'Authorization': localStorage.getItem('token')
-              }
-          }
-          const response = await fetch(url, headers);
-          const result = await response.json();
-          console.log(result);
-          setData(result);
+        const url = "https://moonshot2backend.vercel.app/data";
+        const headers = {
+          headers: {
+            Authorization: localStorage.getItem("token"),
+          },
+        };
+        const response = await fetch(url, headers);
+        const result = await response.json();
+        setData(result);
       } catch (err) {
-          handleError(err);
+        handleError(err);
       }
-  }
-  fetchProducts()
+    };
+    fetchProducts();
   }, []);
+  console.log("data",data);
+  
 
   useEffect(() => {
     filter();
   }, [data, gender, ageFilt, startDate, endDate]);
-
-
 
   useEffect(() => {
     const urlGender = searchParams.get("gender");
@@ -90,13 +88,16 @@ const MainPage = () => {
     });
   }, [gender, ageFilt, startDate, endDate, setSearchParams]);
 
- 
-
   const normalizeDate = (dateString) => {
-    const [day, month, year] = dateString.split("/");
-    const normalizedDate = new Date(`${year}-${month}-${day}T00:00:00`);
-    return normalizedDate;
+    const parts = dateString.split("/");
+    if (parts.length !== 3) {
+      throw new Error(`Invalid date format: ${dateString}`);
+    }
+
+    const [month, day, year] = parts.map(Number);
+    return new Date(year, month - 1, day);
   };
+
   const filter = () => {
     let data2 = data;
 
@@ -152,8 +153,25 @@ const MainPage = () => {
     ],
   };
 
+  // const barOptions = {
+  //   responsive: true,
+  //   onClick: handleBarClick,
+  //   plugins: {
+  //     legend: {
+  //       position: "top",
+  //     },
+  //     title: {
+  //       display: true,
+  //       text: " Features",
+  //     },
+  //   },
+  //   indexAxis: "y",
+  // };
+
+
   const barOptions = {
     responsive: true,
+    maintainAspectRatio: false, // To allow the chart to stretch
     onClick: handleBarClick,
     plugins: {
       legend: {
@@ -161,11 +179,12 @@ const MainPage = () => {
       },
       title: {
         display: true,
-        text: " Features",
+        text: "Features",
       },
     },
     indexAxis: "y",
   };
+  
 
   const lineChartData = {
     labels: filterData.map((d) => d.Day),
@@ -180,8 +199,11 @@ const MainPage = () => {
     ],
   };
 
+
+
   const lineOptions = {
     responsive: true,
+    maintainAspectRatio: false, // To allow the chart to stretch
     plugins: {
       legend: {
         position: "top",
@@ -193,14 +215,19 @@ const MainPage = () => {
       zoom: {
         pan: {
           enabled: true,
-          mode: "xy", // Allow panning both X and Y axes
+          mode: "xy",
           onPan: ({ chart }) => {
             console.log(`Panned to: ${chart.scales.x.min} - ${chart.scales.x.max}`);
           },
         },
         zoom: {
-          enabled: true,
-          mode: "xy", // Allow zooming both X and Y axes
+          wheel: {
+            enabled: true,
+          },
+          pinch: {
+            enabled: true,
+          },
+          mode: "xy",
           speed: 0.1,
           onZoom: ({ chart }) => {
             console.log(`Zoomed to: ${chart.scales.x.min} - ${chart.scales.x.max}`);
@@ -209,6 +236,7 @@ const MainPage = () => {
       },
     },
   };
+  
 
   const handleResetPreferences = () => {
     Cookies.remove("gender");
@@ -223,13 +251,27 @@ const MainPage = () => {
     setSearchParams({});
   };
 
- 
+  const handleLogout = (e) => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("loggedInUser");
+    handleSuccess("User Loggedout");
+    setTimeout(() => {
+      navigate("/");
+    }, 1000);
+  };
 
   return (
     <>
       <nav className="navbar bg-body-tertiary">
         <div className="container">
-          <span className="navbar-brand mb-0 h1">Company Brand</span>
+          <div>
+            <span className="navbar-brand mb-0 h1">Company Brand</span>
+          </div>
+          <div className="ms-auto">
+            <button onClick={handleLogout} className="btn btn-danger">
+              Log Out
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -271,15 +313,16 @@ const MainPage = () => {
         <div className="card  my-3">
           <div className="card-body">
             <div className="row">
-              <div className="col-md-6">
+              <div className="col-md-6" style={{ height: "400px" }}>
                 <Bar options={barOptions} data={ChartData} />
               </div>
-              <div className="col-md-6">
+              <div className="col-md-6" style={{ height: "400px" }}>
                 <Line options={lineOptions} data={lineChartData} />
               </div>
             </div>
           </div>
         </div>
+        <ToastContainer />
       </div>
     </>
   );

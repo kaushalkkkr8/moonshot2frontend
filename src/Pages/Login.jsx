@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { handleError, handleSuccess } from "../utils";
+import { ToastContainer } from 'react-toastify';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -129,6 +130,7 @@ const Login = () => {
             </div>
           </div>
         </div>
+        <ToastContainer/>
       </section>
     </>
   );
