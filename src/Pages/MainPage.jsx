@@ -1,7 +1,10 @@
 import { Bar, Line } from "react-chartjs-2";
 import { Chart as Chartjs, CategoryScale, LinearScale, PointElement, BarElement, LineElement, Title, Tooltip, Legend } from "chart.js";
+import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
 import zoomPlugin from "chartjs-plugin-zoom";
+import { useSearchParams } from "react-router-dom";
+import { handleError } from "../utils";
 
 Chartjs.register(CategoryScale, LinearScale, PointElement, BarElement, LineElement, Title, Tooltip, Legend, zoomPlugin);
 
@@ -12,6 +15,9 @@ const MainPage = () => {
   const [ageFilt, setAgeFilt] = useState("All");
   const [startDate, setStartDate] = useState("2022-10-10");
   const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
+
+
+
   const [sumA, setSumA] = useState(0);
   const [sumB, setSumB] = useState(0);
   const [sumC, setSumC] = useState(0);
@@ -19,24 +25,72 @@ const MainPage = () => {
   const [sumE, setSumE] = useState(0);
   const [sumF, setSumF] = useState(0);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [selectedCategory, setSelectedCategory] = useState("A");
 
+
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProducts = async () => {
       try {
-        const res = await fetch("https://moonshot2backend.vercel.app/data");
-        const allData = await res.json();
-        setData(allData);
-      } catch (error) {
-        console.error("Error fetching profile:", error);
+          // const url = "https://deploy-mern-app-1-api.vercel.app/products";
+          const url = "https://moonshot2backend.vercel.app/data";
+          const headers = {
+              headers: {
+                  'Authorization': localStorage.getItem('token')
+              }
+          }
+          const response = await fetch(url, headers);
+          const result = await response.json();
+          console.log(result);
+          setData(result);
+      } catch (err) {
+          handleError(err);
       }
-    };
-    fetchData();
+  }
+  fetchProducts()
   }, []);
 
   useEffect(() => {
     filter();
   }, [data, gender, ageFilt, startDate, endDate]);
+
+
+
+  useEffect(() => {
+    const urlGender = searchParams.get("gender");
+    const urlAgeFilt = searchParams.get("ageFilt");
+    const urlStartDate = searchParams.get("startDate");
+    const urlEndDate = searchParams.get("endDate");
+
+    if (urlGender) setGender(urlGender);
+    else if (Cookies.get("gender")) setGender(Cookies.get("gender"));
+
+    if (urlAgeFilt) setAgeFilt(urlAgeFilt);
+    else if (Cookies.get("ageFilt")) setAgeFilt(Cookies.get("ageFilt"));
+
+    if (urlStartDate) setStartDate(urlStartDate);
+    else if (Cookies.get("startDate")) setStartDate(Cookies.get("startDate"));
+
+    if (urlEndDate) setEndDate(urlEndDate);
+    else if (Cookies.get("endDate")) setEndDate(Cookies.get("endDate"));
+  }, [searchParams]);
+
+  useEffect(() => {
+    Cookies.set("gender", gender, { expires: 7 });
+    Cookies.set("ageFilt", ageFilt, { expires: 7 });
+    Cookies.set("startDate", startDate, { expires: 7 });
+    Cookies.set("endDate", endDate, { expires: 7 });
+
+    setSearchParams({
+      gender,
+      ageFilt,
+      startDate,
+      endDate,
+    });
+  }, [gender, ageFilt, startDate, endDate, setSearchParams]);
+
+ 
 
   const normalizeDate = (dateString) => {
     const [day, month, year] = dateString.split("/");
@@ -54,7 +108,7 @@ const MainPage = () => {
     }
 
     if (startDate && endDate) {
-      data2 = data2.filter((d) => {
+      data2 = data2?.filter((d) => {
         const dbDate = normalizeDate(d.Day);
 
         const start = new Date(startDate + "T00:00:00");
@@ -68,7 +122,7 @@ const MainPage = () => {
         return dbDate >= start && dbDate <= end;
       });
     }
-setFilterData(data2)
+    setFilterData(data2);
 
     setSumA(data2.reduce((a, b) => a + (b.A || 0), 0));
     setSumB(data2.reduce((a, b) => a + (b.B || 0), 0));
@@ -126,7 +180,6 @@ setFilterData(data2)
     ],
   };
 
-
   const lineOptions = {
     responsive: true,
     plugins: {
@@ -140,77 +193,37 @@ setFilterData(data2)
       zoom: {
         pan: {
           enabled: true,
-          mode: "xy",
+          mode: "xy", // Allow panning both X and Y axes
+          onPan: ({ chart }) => {
+            console.log(`Panned to: ${chart.scales.x.min} - ${chart.scales.x.max}`);
+          },
         },
         zoom: {
           enabled: true,
-          mode: "xy",
+          mode: "xy", // Allow zooming both X and Y axes
           speed: 0.1,
           onZoom: ({ chart }) => {
             console.log(`Zoomed to: ${chart.scales.x.min} - ${chart.scales.x.max}`);
-          },
-          onPan: ({ chart }) => {
-            console.log(`Panned to: ${chart.scales.x.min} - ${chart.scales.x.max}`);
           },
         },
       },
     },
   };
-  
-  
-  
-  
 
-  // const lineOptions = {
-  //   responsive: true,
-  //   plugins: {
-  //     legend: {
-  //       position: "top",
-  //     },
-  //     title: {
-  //       display: true,
-  //       text: "Line Chart",
-  //     },
-  //   },
-  //   zoom: {
-  //     pan: {
-  //       enabled: true,
-  //       mode: "xy",
-  //     },
-  //     zoom: {
-  //       enabled: true,
-  //       mode: "xy",
-  //       speed: 0.1,
-  //     },
-  //   },
-  // };
+  const handleResetPreferences = () => {
+    Cookies.remove("gender");
+    Cookies.remove("ageFilt");
+    Cookies.remove("startDate");
+    Cookies.remove("endDate");
 
-  // const barOptions = {
-  //   responsive: true,
-  //   plugins: {
-  //     legend: {
-  //       position: "top",
-  //     },
-  //     title: {
-  //       display: true,
-  //       text: "Horizontal Bar Chart",
-  //     },
-  //   },
-  //   indexAxis: "y",
-  // };
+    setGender("All");
+    setAgeFilt("All");
+    setStartDate("2022-10-10");
+    setEndDate(new Date().toISOString().split("T")[0]);
+    setSearchParams({});
+  };
 
-  // const lineOptions = {
-  //   responsive: true,
-  //   plugins: {
-  //     legend: {
-  //       position: "top",
-  //     },
-  //     title: {
-  //       display: true,
-  //       text: "Line Chart",
-  //     },
-  //   },
-  // };
+ 
 
   return (
     <>
@@ -246,6 +259,12 @@ setFilterData(data2)
               <option value="15-25">15-25</option>
               <option value=">25">25</option>
             </select>
+
+            <div className="my-3">
+              <button className="btn btn-danger" onClick={handleResetPreferences}>
+                Reset Preferences
+              </button>
+            </div>
           </div>
         </div>
 
