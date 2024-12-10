@@ -3,7 +3,7 @@ import { Chart as Chartjs, CategoryScale, LinearScale, PointElement, BarElement,
 import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
 import zoomPlugin from "chartjs-plugin-zoom";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { handleError, handleSuccess } from "../utils";
 import { ToastContainer } from "react-toastify";
 
@@ -14,7 +14,7 @@ const MainPage = () => {
   const [filterData, setFilterData] = useState([]);
   const [gender, setGender] = useState("All");
   const [ageFilt, setAgeFilt] = useState("All");
-  const [startDate, setStartDate] = useState("2022-10-10");
+  const [startDate, setStartDate] = useState("2022-10-04");
   const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
 
   const navigate = useNavigate();
@@ -48,8 +48,7 @@ const MainPage = () => {
     };
     fetchProducts();
   }, []);
-  console.log("data",data);
-  
+
 
   useEffect(() => {
     filter();
@@ -90,12 +89,13 @@ const MainPage = () => {
 
   const normalizeDate = (dateString) => {
     const parts = dateString.split("/");
+
     if (parts.length !== 3) {
       throw new Error(`Invalid date format: ${dateString}`);
     }
 
-    const [month, day, year] = parts.map(Number);
-    return new Date(year, month - 1, day);
+    const [day, month, year] = parts.map(Number); 
+    return new Date(year, month-1, day);
   };
 
   const filter = () => {
@@ -122,7 +122,9 @@ const MainPage = () => {
 
         return dbDate >= start && dbDate <= end;
       });
+      console.log("datatatata", data2);
     }
+
     setFilterData(data2);
 
     setSumA(data2.reduce((a, b) => a + (b.A || 0), 0));
@@ -153,25 +155,10 @@ const MainPage = () => {
     ],
   };
 
-  // const barOptions = {
-  //   responsive: true,
-  //   onClick: handleBarClick,
-  //   plugins: {
-  //     legend: {
-  //       position: "top",
-  //     },
-  //     title: {
-  //       display: true,
-  //       text: " Features",
-  //     },
-  //   },
-  //   indexAxis: "y",
-  // };
-
-
+  
   const barOptions = {
     responsive: true,
-    maintainAspectRatio: false, // To allow the chart to stretch
+    maintainAspectRatio: false, 
     onClick: handleBarClick,
     plugins: {
       legend: {
@@ -184,7 +171,6 @@ const MainPage = () => {
     },
     indexAxis: "y",
   };
-  
 
   const lineChartData = {
     labels: filterData.map((d) => d.Day),
@@ -199,11 +185,9 @@ const MainPage = () => {
     ],
   };
 
-
-
   const lineOptions = {
     responsive: true,
-    maintainAspectRatio: false, // To allow the chart to stretch
+    maintainAspectRatio: false, 
     plugins: {
       legend: {
         position: "top",
@@ -216,9 +200,7 @@ const MainPage = () => {
         pan: {
           enabled: true,
           mode: "xy",
-          onPan: ({ chart }) => {
-            console.log(`Panned to: ${chart.scales.x.min} - ${chart.scales.x.max}`);
-          },
+          onPan: ({ chart }) => {},
         },
         zoom: {
           wheel: {
@@ -229,14 +211,11 @@ const MainPage = () => {
           },
           mode: "xy",
           speed: 0.1,
-          onZoom: ({ chart }) => {
-            console.log(`Zoomed to: ${chart.scales.x.min} - ${chart.scales.x.max}`);
-          },
+          onZoom: ({ chart }) => {},
         },
       },
     },
   };
-  
 
   const handleResetPreferences = () => {
     Cookies.remove("gender");
@@ -246,7 +225,7 @@ const MainPage = () => {
 
     setGender("All");
     setAgeFilt("All");
-    setStartDate("2022-10-10");
+    setStartDate("2022-10-04");
     setEndDate(new Date().toISOString().split("T")[0]);
     setSearchParams({});
   };
@@ -266,6 +245,8 @@ const MainPage = () => {
         <div className="container">
           <div>
             <span className="navbar-brand mb-0 h1">Company Brand</span>
+             <Link to="https://moonshot1-ten.vercel.app/" className="h5 mx-3 link-offset-2 link-underline link-underline-opacity-0" target="blank" style={{textDecoration:"none"}}>Module 1 </Link>
+             <Link to="https://github.com/kaushalkkkr8/moonshot1" className="h5 link-offset-2 link-underline link-underline-opacity-0" target="blank" style={{textDecoration:"none"}}>Module 1 code</Link>
           </div>
           <div className="ms-auto">
             <button onClick={handleLogout} className="btn btn-danger">
